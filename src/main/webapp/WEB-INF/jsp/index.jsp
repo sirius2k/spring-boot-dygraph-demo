@@ -60,11 +60,14 @@
     <div class="container theme-showcase" role="main">
         <div class="page-header">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <h1>PC <span class="label label-default"><fmt:formatNumber value="${betagoCCU.pc}"/></span></h1>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <h1>Mobile <span class="label label-default"><fmt:formatNumber value="${betagoCCU.mobile}"/></span></h1>
+                </div>
+                <div class="col-md-4">
+                    <h1 id="time"></h1>
                 </div>
             </div>
         </div>
@@ -104,16 +107,15 @@
         }
 
         function printTime() {
-            var clock = document.getElementById("datetime"); // 출력할 장소 선택
             var now = new Date(); // 현재시간
-            var h = today.getHours();
-            var m = today.getMinutes();
-            var s = today.getSeconds();
-            h = checkTume(h);
+            var h = now.getHours();
+            var m = now.getMinutes();
+            var s = now.getSeconds();
+            h = checkTime(h);
             m = checkTime(m);
             s = checkTime(s);
 
-            $('#txt').text(h + ":" + m + ":" + "s");
+            $('#time').text(h + ":" + m + ":" + s);
 
             setTimeout(printTime, 1000); // setTimeout(“실행할함수”,시간) 시간은1초의 경우 1000
         }
