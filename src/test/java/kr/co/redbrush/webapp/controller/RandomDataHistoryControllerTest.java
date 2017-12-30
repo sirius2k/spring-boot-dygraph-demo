@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -37,27 +38,29 @@ public class RandomDataHistoryControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Value("${time.range.default:120}")
+    private Integer defaultTimeRange;
+
     @MockBean
     private RandomDataService randomDataService;
 
-    private RandomData randomData = new RandomData(1L, 100, new Date());
+    private RandomData randomData = new RandomData(1L, 100, 1L, new Date());
     private List<RandomData> randomDataHistory = new ArrayList<RandomData>();
-    private Integer timeBeforeInMinutes = 180;
+    private Integer timeRangeInMinutes = 180;
 
     @Before
     public void before() {
     }
 
     @Test
-    public void testIndex() throws Exception {
+    public void testIndexWithOutTimeRange() throws Exception {
         when(randomDataService.getLastOne()).thenReturn(randomData);
         when(randomDataService.getListBetween(any(Date.class), any(Date.class))).thenReturn(randomDataHistory);
 
         this.mockMvc.perform(get("/")
-                .param("timeBeforeInMinutes", timeBeforeInMinutes.toString())
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("timeBeforeInMinutes", timeBeforeInMinutes ))
+                .andExpect(model().attribute("timeRangeInMinutes", defaultTimeRange ))
                 .andExpect(model().attribute("randomData", randomData ))
                 .andExpect(model().attribute("randomDataHistory", randomDataHistory ))
                 .andExpect(view().name("index"))
@@ -68,16 +71,15 @@ public class RandomDataHistoryControllerTest {
     }
 
     @Test
-    public void testIndexWithDefaultTimeBeforeInMinutes() throws Exception {
+    public void testIndexWithGivenTimeRange() throws Exception {
         when(randomDataService.getLastOne()).thenReturn(randomData);
         when(randomDataService.getListBetween(any(Date.class), any(Date.class))).thenReturn(randomDataHistory);
 
         this.mockMvc.perform(get("/")
+                .param("timeRangeInMinutes", timeRangeInMinutes.toString())
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(model().attributeExists("randomData"))
-                .andExpect(model().attributeExists("randomDataHistory"))
-                .andExpect(model().attribute("timeBeforeInMinutes", RandomDataHistoryController.DEFAULT_TIME_BEFORE_IN_MINUTES ))
+                .andExpect(model().attribute("timeRangeInMinutes", timeRangeInMinutes ))
                 .andExpect(model().attribute("randomData", randomData ))
                 .andExpect(model().attribute("randomDataHistory", randomDataHistory ))
                 .andExpect(view().name("index"))

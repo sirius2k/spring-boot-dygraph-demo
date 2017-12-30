@@ -19,5 +19,6 @@ public class RandomData {
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
     private Integer value;
+    private Long sum;
     private Date createdDate;
 }

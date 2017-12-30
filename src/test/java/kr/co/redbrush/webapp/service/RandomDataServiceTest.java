@@ -41,6 +41,7 @@ public class RandomDataServiceTest {
     private String serverUrl = "http://localhost";;
     private String createRandomUrl = "/random/create";
     private RandomValue randomValue = new RandomValue(1);
+    private RandomData lastData = new RandomData(1L, 1, 1L, new Date());
 
     @Before
     public void before() {
@@ -51,13 +52,53 @@ public class RandomDataServiceTest {
 
     @Test
     public void testCollect() {
-        when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(this.randomValue);
+        when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(randomValue);
+        when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(lastData);
 
         RandomData collectedData = randomDataService.collect();
+
+        LOGGER.debug("Collected data : {}", collectedData);
 
         verify(repository).save(collectedData);
 
         assertThat("Unexpected randomData", collectedData, is(collectedData));
+        assertThat("Unexpected created date", collectedData.getValue(), is(1));
+        assertThat("Unexpected created date", collectedData.getSum(), is(2L));
+        assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
+    }
+
+    @Test
+    public void testCollectWhenNullSumInLastData() {
+        when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(randomValue);
+        when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(lastData);
+        lastData.setSum(null);
+
+        RandomData collectedData = randomDataService.collect();
+
+        LOGGER.debug("Collected data : {}", collectedData);
+
+        verify(repository).save(collectedData);
+
+        assertThat("Unexpected randomData", collectedData, is(collectedData));
+        assertThat("Unexpected created date", collectedData.getValue(), is(1));
+        assertThat("Unexpected created date", collectedData.getSum(), is(1L));
+        assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
+    }
+
+    @Test
+    public void testCollectWhenNullLastData() {
+        when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(randomValue);
+        when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(null);
+
+        RandomData collectedData = randomDataService.collect();
+
+        LOGGER.debug("Collected data : {}", collectedData);
+
+        verify(repository).save(collectedData);
+
+        assertThat("Unexpected randomData", collectedData, is(collectedData));
+        assertThat("Unexpected created date", collectedData.getValue(), is(1));
+        assertThat("Unexpected created date", collectedData.getSum(), is(1L));
         assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
     }
 

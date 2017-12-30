@@ -41,13 +41,13 @@
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">조회범위 <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="#">최근 2시간</a></li>
-                            <li><a href="#">최근 4시간</a></li>
-                            <li><a href="#">최근 6시간</a></li>
-                            <li><a href="#">최근 12시간</a></li>
-                            <li><a href="#">최근 1일</a></li>
-                            <li><a href="#">최근 3일</a></li>
-                            <li><a href="#">최근 7일</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="120">최근 2시간</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="240">최근 4시간</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="360">최근 6시간</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="720">최근 12시간</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="1440">최근 1일</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="4320">최근 3일</a></li>
+                            <li><a href="#" class="timeRange" data-minutes="10080">최근 7일</a></li>
                             <li role="separator" class="divider"></li>
                             <!--li class="dropdown-header">Nav header</li-->
                             <li><a href="#">범위 지정</a></li>
@@ -61,18 +61,20 @@
         <div class="page-header">
             <div class="row">
                 <div class="col-md-4">
-                    <h1>PC <span class="label label-default"><fmt:formatNumber value="${betagoCCU.pc}"/></span></h1>
+                    <h1>Sum <span class="label label-default"><fmt:formatNumber value="${randomData.sum}"/></span></h1>
                 </div>
                 <div class="col-md-4">
-                    <h1>Mobile <span class="label label-default"><fmt:formatNumber value="${betagoCCU.mobile}"/></span></h1>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 text-right">
                     <h1 id="time"></h1>
                 </div>
             </div>
         </div>
-        <div id="graphdiv2" class="col-md-12">Graph</div>
+        <div id="graphdiv2" class="col-md-12" style="height:500px;">Graph</div>
     </div>
+    <form id="dataHistoryForm" name="dataHistoryForm" action="/">
+        <input type="hidden" id="timeRangeInMinutes" name="timeRangeInMinutes" value="${param.timeRangeInMinutes}"/>
+    </form>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -80,28 +82,33 @@
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/dygraph.min.js"></script>
     <script type="text/javascript">
-        <c:if test="${!empty ccuHistory}">
+        <c:if test="${!empty randomDataHistory}">
         g2 = new Dygraph(
-            document.getElementById("graphdiv2"),
-            "Time,CCU\n" +
-            "<c:forEach var='history' items='${ccuHistory}' varStatus='status'><fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.collectedDate}'/>,<c:out value='${history.pc}'/>\n</c:forEach>"<c:if test="${!empty ccuHistory}">,</c:if>
-            /*
+            $("#graphdiv2").get(0),
+            "Time,Sum\n" +
+            "<c:forEach var='history' items='${randomDataHistory}' varStatus='status'><fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.createdDate}'/>,<c:out value='${empty history.sum ? 0 : history.sum}'/>\n</c:forEach>",
             {
-            rollPeriod: 1,
-            showRoller: true
+                rollPeriod: 1,
+                showRoller: true
             }
-            */
             /*
             // Data sample
-            "2017-12-13 20:00,75\n" +
-            "2017-12-13 20:01,70\n" +
-            "2017-12-13 20:02,80\n"
+            "2017-12-13 20:00:01,75\n" +
+            "2017-12-13 20:01:22,70\n" +
+            "2017-12-13 20:02:33,80\n"
             */
-
         );
         </c:if>
 
         window.onload = function() {
+            $('.timeRange[data-minutes="${timeRangeInMinutes}"]').parent().addClass('font-weight-bold');
+            $('.timeRange').on('click', function(event) {
+               event.preventDefault();
+               changeTimeRange($(event.target).data("minutes"));
+            });
+
+            rangeText = $('.timeRange[data-minutes="${timeRangeInMinutes}"]').text();
+
             printTime();
             setInterval(reloadPage, 3000);
         }
@@ -115,7 +122,7 @@
             m = checkTime(m);
             s = checkTime(s);
 
-            $('#time').text(h + ":" + m + ":" + s);
+            $('#time').text(h + ":" + m + ":" + s + " (" + rangeText + ")");
 
             setTimeout(printTime, 1000); // setTimeout(“실행할함수”,시간) 시간은1초의 경우 1000
         }
@@ -131,8 +138,9 @@
             location.reload();
         }
 
-        function changeTimeBefore() {
-            document.getElementById("ccuForm").submit();
+        function changeTimeRange(timeRangeInMinutes) {
+            $("#timeRangeInMinutes").val(timeRangeInMinutes);
+            $("#dataHistoryForm").submit();
         }
     </script>
 </body>

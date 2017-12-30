@@ -39,15 +39,22 @@ public class RandomDataService {
         LOGGER.info("serverHost : {}, createRandomUrl : {}, requestUrl : {}", serverHost, createRandomUrl, requestUrl);
     }
 
-    //@Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 1000)
     public RandomData collect() {
+        RandomData lastData = repository.findFirst1ByOrderByCreatedDateDesc();
         RandomValue randomValue = restTemplate.getForObject(requestUrl, RandomValue.class);
 
         RandomData randomData = new RandomData();
         randomData.setValue(randomValue.getValue());
         randomData.setCreatedDate(new Date());
 
-        LOGGER.info("Collected random value : {}", randomValue);
+        if (lastData!=null && lastData.getSum()!=null) {
+            randomData.setSum(lastData.getSum() + randomValue.getValue());
+        } else {
+            randomData.setSum(new Long(randomValue.getValue()));
+        }
+
+        LOGGER.info("New randomData to save : {}", randomData);
 
         repository.save(randomData);
 
