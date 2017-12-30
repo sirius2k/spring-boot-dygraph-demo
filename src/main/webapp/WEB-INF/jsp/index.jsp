@@ -61,10 +61,10 @@
         <div class="page-header">
             <div class="row">
                 <div class="col-md-4">
-                    <h1>PC <span class="label label-default"><fmt:formatNumber value="${betagoCCU.pc}"/></span></h1>
+                    <h1>PC <span class="label label-default">0<fmt:formatNumber value="${betagoCCU.pc}"/></span></h1>
                 </div>
                 <div class="col-md-4">
-                    <h1>Mobile <span class="label label-default"><fmt:formatNumber value="${betagoCCU.mobile}"/></span></h1>
+                    <h1>Mobile <small>0</small><span class="label label-default">0<fmt:formatNumber value="${betagoCCU.mobile}"/></span></h1>
                 </div>
                 <div class="col-md-4">
                     <h1 id="time"></h1>
