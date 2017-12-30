@@ -9,7 +9,7 @@ $ cd /go/to/project
 $ mvn spring-boot:run
 ```
 
-You can see graph page on your browser http://localhost:8080
+You can see graph page on your browser http://localhost:8080. Also, you can access to h2 database with http://localhost:8080/h2
 
 ## Contributors
 Park, KyoungWook (Kevin) / sirius00@paran.com
