@@ -4,7 +4,7 @@
     <groupId>kr.co.redbrush.webapp</groupId>
     <artifactId>spring-boot-dygraph-example</artifactId>
     <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>spring-boot-dygraph-example Maven Webapp</name>
 
     <parent>
