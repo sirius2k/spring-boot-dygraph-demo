@@ -129,7 +129,7 @@
     </dependencies>
 
     <build>
-        <finalName>spring-boot-jsp-example</finalName>
+        <finalName>spring-boot-dygraph-example</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
