@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -19,8 +21,12 @@ import java.util.Date;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.hamcrest.number.OrderingComparison.lessThanOrEqualTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +53,7 @@ public class RandomDataServiceTest {
     public void before() {
         ReflectionTestUtils.setField(randomDataService, "serverHost", serverUrl);
         ReflectionTestUtils.setField(randomDataService, "createRandomUrl", createRandomUrl);
+        ReflectionTestUtils.setField(randomDataService, "collectEnabled", true);
         ReflectionTestUtils.invokeMethod(randomDataService, "init");
     }
 
@@ -55,16 +62,15 @@ public class RandomDataServiceTest {
         when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(randomValue);
         when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(lastData);
 
-        RandomData collectedData = randomDataService.collect();
+        ArgumentCaptor<RandomData> argumentCaptor = ArgumentCaptor.forClass(RandomData.class);
 
-        LOGGER.debug("Collected data : {}", collectedData);
+        randomDataService.collect();
 
-        verify(repository).save(collectedData);
+        verify(repository).save(argumentCaptor.capture());
 
-        assertThat("Unexpected randomData", collectedData, is(collectedData));
-        assertThat("Unexpected created date", collectedData.getValue(), is(1));
-        assertThat("Unexpected created date", collectedData.getSum(), is(2L));
-        assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getId(), nullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getValue(), is(randomValue.getValue()));
+        assertThat("Unexpected value.", argumentCaptor.getValue().getSum(), is(lastData.getSum() + randomValue.getValue()));
     }
 
     @Test
@@ -73,16 +79,15 @@ public class RandomDataServiceTest {
         when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(lastData);
         lastData.setSum(null);
 
-        RandomData collectedData = randomDataService.collect();
+        ArgumentCaptor<RandomData> argumentCaptor = ArgumentCaptor.forClass(RandomData.class);
 
-        LOGGER.debug("Collected data : {}", collectedData);
+        randomDataService.collect();
 
-        verify(repository).save(collectedData);
+        verify(repository).save(argumentCaptor.capture());
 
-        assertThat("Unexpected randomData", collectedData, is(collectedData));
-        assertThat("Unexpected created date", collectedData.getValue(), is(1));
-        assertThat("Unexpected created date", collectedData.getSum(), is(1L));
-        assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getId(), nullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getValue(), is(randomValue.getValue()));
+        assertThat("Unexpected value.", argumentCaptor.getValue().getSum(), is(new Long(randomValue.getValue())));
     }
 
     @Test
@@ -90,16 +95,15 @@ public class RandomDataServiceTest {
         when(restTemplate.getForObject(serverUrl + createRandomUrl, RandomValue.class)).thenReturn(randomValue);
         when(repository.findFirst1ByOrderByCreatedDateDesc()).thenReturn(null);
 
-        RandomData collectedData = randomDataService.collect();
+        ArgumentCaptor<RandomData> argumentCaptor = ArgumentCaptor.forClass(RandomData.class);
 
-        LOGGER.debug("Collected data : {}", collectedData);
+        randomDataService.collect();
 
-        verify(repository).save(collectedData);
+        verify(repository).save(argumentCaptor.capture());
 
-        assertThat("Unexpected randomData", collectedData, is(collectedData));
-        assertThat("Unexpected created date", collectedData.getValue(), is(1));
-        assertThat("Unexpected created date", collectedData.getSum(), is(1L));
-        assertThat("Unexpected created date", collectedData.getCreatedDate(), notNullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getId(), nullValue());
+        assertThat("Unexpected value.", argumentCaptor.getValue().getValue(), is(randomValue.getValue()));
+        assertThat("Unexpected value.", argumentCaptor.getValue().getSum(), is(new Long(randomValue.getValue())));
     }
 
     @Test

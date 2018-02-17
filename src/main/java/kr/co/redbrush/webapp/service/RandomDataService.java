@@ -32,6 +32,8 @@ public class RandomDataService {
 
     private String requestUrl;
 
+    private boolean collectEnabled = true;
+
     @PostConstruct
     private void init() {
         requestUrl = serverHost + createRandomUrl;
@@ -40,25 +42,25 @@ public class RandomDataService {
     }
 
     @Scheduled(fixedRate = 1000)
-    public RandomData collect() {
-        RandomData lastData = repository.findFirst1ByOrderByCreatedDateDesc();
-        RandomValue randomValue = restTemplate.getForObject(requestUrl, RandomValue.class);
+    public void collect() {
+        if (collectEnabled) {
+            RandomData lastData = repository.findFirst1ByOrderByCreatedDateDesc();
+            RandomValue randomValue = restTemplate.getForObject(requestUrl, RandomValue.class);
 
-        RandomData randomData = new RandomData();
-        randomData.setValue(randomValue.getValue());
-        randomData.setCreatedDate(new Date());
+            RandomData randomData = new RandomData();
+            randomData.setValue(randomValue.getValue());
+            randomData.setCreatedDate(new Date());
 
-        if (lastData!=null && lastData.getSum()!=null) {
-            randomData.setSum(lastData.getSum() + randomValue.getValue());
-        } else {
-            randomData.setSum(new Long(randomValue.getValue()));
+            if (lastData != null && lastData.getSum() != null) {
+                randomData.setSum(lastData.getSum() + randomValue.getValue());
+            } else {
+                randomData.setSum(new Long(randomValue.getValue()));
+            }
+
+            LOGGER.info("New randomData to save : {}", randomData);
+
+            repository.save(randomData);
         }
-
-        LOGGER.info("New randomData to save : {}", randomData);
-
-        repository.save(randomData);
-
-        return randomData;
     }
 
     public List<RandomData> getListBetween(Date startDate, Date endDate) {
