@@ -66,7 +66,7 @@
                 <div class="col-md-4">
                 </div>
                 <div class="col-md-4 text-right">
-                    <h2 id="time"></h1>
+                    <h1 id="time"></h1>
                 </div>
             </div>
         </div>
@@ -82,21 +82,22 @@
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/dygraph.min.js"></script>
     <script type="text/javascript">
+        var data = [
+            <c:if test="${!empty randomDataHistory}">
+                <c:forEach var='history' items='${randomDataHistory}' varStatus='status'>
+                    [new Date("<fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.createdDate}'/>"), ${empty history.sum ? 0 : history.sum}]<c:if test="${!status.last}">,</c:if>
+                </c:forEach>
+            </c:if>
+        ];
+
         <c:if test="${!empty randomDataHistory}">
         g2 = new Dygraph(
-            $("#graphdiv2").get(0),
-            "Time,Sum\n" +
-            "<c:forEach var='history' items='${randomDataHistory}' varStatus='status'><fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.createdDate}'/>,<c:out value='${empty history.sum ? 0 : history.sum}'/>\n</c:forEach>",
+            $("#graphdiv2").get(0), data,
             {
                 rollPeriod: 1,
-                showRoller: true
+                showRoller: true,
+                labels: ['Time', 'Sum']
             }
-            /*
-            // Data sample
-            "2017-12-13 20:00:01,75\n" +
-            "2017-12-13 20:01:22,70\n" +
-            "2017-12-13 20:02:33,80\n"
-            */
         );
         </c:if>
 
