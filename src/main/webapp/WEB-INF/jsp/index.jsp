@@ -90,18 +90,22 @@
             </c:if>
         ];
 
-        <c:if test="${!empty randomDataHistory}">
-        g2 = new Dygraph(
-            $("#graphdiv2").get(0), data,
-            {
-                rollPeriod: 1,
-                showRoller: true,
-                labels: ['Time', 'Sum']
-            }
-        );
-        </c:if>
-
         window.onload = function() {
+            <c:if test="${!empty randomDataHistory}">
+            g2 = new Dygraph(
+                $("#graphdiv2").get(0), data,
+                {
+                    rollPeriod: 1,
+                    showRoller: true,
+                    // TODO : Need to check this option is working properly
+                    //errorBars: true,
+                    labels: ['Time', 'Sum']
+                }
+            );
+
+            g2.resize();
+            </c:if>
+
             $('.timeRange[data-minutes="${timeRangeInMinutes}"]').parent().addClass('font-weight-bold');
             $('.timeRange').on('click', function(event) {
                event.preventDefault();
