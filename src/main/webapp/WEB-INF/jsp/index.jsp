@@ -70,7 +70,7 @@
                 </div>
             </div>
         </div>
-        <div id="graphdiv2" class="col-md-12" style="height:500px;">Graph</div>
+        <div id="graphdiv2" class="col-md-12">Graph</div>
     </div>
     <form id="dataHistoryForm" name="dataHistoryForm" action="/">
         <input type="hidden" id="timeRangeInMinutes" name="timeRangeInMinutes" value="${param.timeRangeInMinutes}"/>
@@ -96,9 +96,7 @@
                 $("#graphdiv2").get(0), data,
                 {
                     rollPeriod: 1,
-                    showRoller: true,
-                    // TODO : Need to check this option is working properly
-                    //errorBars: true,
+                    showRoller: false,
                     labels: ['Time', 'Sum']
                 }
             );
