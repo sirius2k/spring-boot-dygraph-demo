@@ -138,7 +138,8 @@
         }
 
         function reloadPage() {
-            location.reload();
+            // TODO : get delta only for reload graph only
+            //location.reload();
         }
 
         function changeTimeRange(timeRangeInMinutes) {
