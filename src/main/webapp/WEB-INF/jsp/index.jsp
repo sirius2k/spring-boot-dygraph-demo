@@ -118,19 +118,16 @@
 
         function printTime() {
             var now = new Date(); // 현재시간
-            var h = now.getHours();
-            var m = now.getMinutes();
-            var s = now.getSeconds();
-            h = checkTime(h);
-            m = checkTime(m);
-            s = checkTime(s);
+            var h = formatTime(now.getHours());
+            var m = formatTime(now.getMinutes());
+            var s = formatTime(now.getSeconds());
 
             $('#time').text(h + ":" + m + ":" + s + " (" + rangeText + ")");
 
             setTimeout(printTime, 1000); // setTimeout(“실행할함수”,시간) 시간은1초의 경우 1000
         }
 
-        function checkTime(num) {
+        function formatTime(num) {
             if (num < 10) {
                 num = "0" + num;
             }
