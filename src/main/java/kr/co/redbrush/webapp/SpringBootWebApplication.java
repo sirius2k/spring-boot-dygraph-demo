@@ -16,11 +16,6 @@ public class SpringBootWebApplication extends SpringBootServletInitializer {
         return application.sources(SpringBootApplication.class);
     }
 
-    @Bean
-    public RestTemplate getRestTemplate() {
-        return new RestTemplate();
-    }
-
     public static void main(String args[]) throws Exception {
         SpringApplication.run(SpringBootWebApplication.class);
     }
