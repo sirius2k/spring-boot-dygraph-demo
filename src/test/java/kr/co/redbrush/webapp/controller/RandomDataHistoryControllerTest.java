@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = RandomDataHistoryController.class)
 @ContextConfiguration(classes={SpringBootWebApplication.class})
 @TestPropertySource(locations= TestVariables.APPLICATION_TEST_PROPERTIES)
+
 @Slf4j
 public class RandomDataHistoryControllerTest {
     @Autowired
