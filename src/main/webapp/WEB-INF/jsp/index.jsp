@@ -2,6 +2,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <!doctype html>
 <html lang="ko">
 <head>
@@ -54,6 +55,11 @@
                         </ul>
                     </li>
                 </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a id="resetButton" href="/reset">DB Reset</a></li>
+                    <li><a id="startButton" href="/start">수집시작</a></li>
+                    <li class="active"><a id="stopButton" href="/stop">수집중지</a></li>
+                </ul>
             </div><!--/.nav-collapse -->
         </div>
     </nav>
@@ -71,9 +77,14 @@
             </div>
         </div>
         <div id="graphdiv2" class="col-md-12">Graph</div>
+        <div class="row">
+            <div id="updated" class="text-right"></div>
+            <div id="alert" class="col-md-12"></div>
+        </div>
     </div>
     <form id="dataHistoryForm" name="dataHistoryForm" action="/">
         <input type="hidden" id="timeRangeInMinutes" name="timeRangeInMinutes" value="${param.timeRangeInMinutes}"/>
+        <input type="hidden" id="lastId" name="lastId" value="${!empty randomDataHistory ? randomDataHistory[fn:length(randomDataHistory)-1].id : -1}"/>
     </form>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -82,15 +93,44 @@
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/dygraph.min.js"></script>
     <script type="text/javascript">
-        var data = [
-            <c:if test="${!empty randomDataHistory}">
-                <c:forEach var='history' items='${randomDataHistory}' varStatus='status'>
-                    [new Date("<fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.createdDate}'/>"), ${empty history.sum ? 0 : history.sum}]<c:if test="${!status.last}">,</c:if>
-                </c:forEach>
-            </c:if>
-        ];
+        var data = [];
+        var g2 = null;
+        var statusApi = "/status";
+        var startApi = "/start";
+        var stopApi = "/stop";
+        var resetApi = "/reset";
+        var deltaApi = "/delta";
+        var timeRangeInMinutes = $("#timeRangeInMinutes").val() == "" ? 120 : parseInt($("#timeRangeInMinutes").val(), 10);
+        var maxDataLength = timeRangeInMinutes * 60;
 
         window.onload = function() {
+            createGraph();
+
+            $('.timeRange[data-minutes="${timeRangeInMinutes}"]').parent().addClass('font-weight-bold');
+            $('.timeRange').on('click', function(event) {
+               event.preventDefault();
+               changeTimeRange($(event.target).data("minutes"));
+            });
+
+            rangeText = $('.timeRange[data-minutes="${timeRangeInMinutes}"]').text();
+
+            printTime();
+
+            addButtonEvents();
+            setupStatusButton();
+
+            window.intervalId = setInterval(updateData, 3000);
+        }
+
+        function createGraph() {
+            data = [
+                <c:if test="${!empty randomDataHistory}">
+                <c:forEach var='history' items='${randomDataHistory}' varStatus='status'>
+                [new Date("<fmt:formatDate pattern='yyyy/MM/dd HH:mm:ss' value='${history.createdDate}'/>"), ${empty history.sum ? 0 : history.sum}]<c:if test="${!status.last}">,</c:if>
+                </c:forEach>
+                </c:if>
+            ];
+
             <c:if test="${!empty randomDataHistory}">
             g2 = new Dygraph(
                 $("#graphdiv2").get(0), data,
@@ -103,17 +143,6 @@
 
             g2.resize();
             </c:if>
-
-            $('.timeRange[data-minutes="${timeRangeInMinutes}"]').parent().addClass('font-weight-bold');
-            $('.timeRange').on('click', function(event) {
-               event.preventDefault();
-               changeTimeRange($(event.target).data("minutes"));
-            });
-
-            rangeText = $('.timeRange[data-minutes="${timeRangeInMinutes}"]').text();
-
-            printTime();
-            setInterval(reloadPage, 3000);
         }
 
         function printTime() {
@@ -134,14 +163,127 @@
             return num;
         }
 
-        function reloadPage() {
-            // TODO : get delta only for reload graph only
-            //location.reload();
+        function setupStatusButton() {
+            $.get(statusApi, function(data) {
+                console.log("status : " + data);
+                if (data === true) {
+                    $("#startButton").parent().addClass("active");
+                    $("#stopButton").parent().removeClass("active");
+                } else {
+                    $("#startButton").parent().removeClass("active");
+                    $("#stopButton").parent().addClass("active");
+                }
+            });
+        }
+
+        function addButtonEvents() {
+            $("#resetButton").on("click", function(event) {
+                event.stopImmediatePropagation();
+
+                if (confirm("DB를 리셋하시겠습니까?")) {
+                    $.post(resetApi, function(data) {
+                        if (data === true) {
+                            location.reload();
+                        }
+                    });
+                    location.reload();
+                }
+
+                return false;
+            });
+
+            $("#startButton").on("click", function(event) {
+                event.stopImmediatePropagation();
+
+                if (!$(event.target).parent().hasClass("active")) {
+                    $.post(startApi, function(data) {
+                        console.log("/start : " + data);
+                    });
+                    alert("Start collecting data...");
+
+                    location.reload();
+
+                    $("#startButton").parent().addClass("active");
+                    $("#stopButton").parent().removeClass("active");
+                }
+
+                return false;
+            });
+
+            $("#stopButton").on("click", function(event) {
+                event.stopImmediatePropagation();
+
+                if (!$(event.target).parent().hasClass("active")) {
+                    $.post(stopApi, function(data) {
+                        console.log("/stop : " + data);
+                    });
+
+                    alert("Stop collecting data...");
+
+                    $("#startButton").parent().removeClass("active");
+                    $("#stopButton").parent().addClass("active");
+                }
+
+                return false;
+            });
         }
 
         function changeTimeRange(timeRangeInMinutes) {
             $("#timeRangeInMinutes").val(timeRangeInMinutes);
             $("#dataHistoryForm").submit();
+        }
+
+        function showAlert(type, message) {
+            $("#alert").removeClass()
+                .addClass("alert")
+                .addClass("alert-" + type)
+                .text(message)
+                .show();
+        }
+
+        function hideAlert() {
+            $("#alert").hide();
+        }
+
+        function updateData() {
+            console.log("updateGraph called. lastId = " + $("#lastId").val());
+
+            if (g2) {
+                var lastId = $("#lastId").val();
+                var timeRangeInMinutes = $("#timeRangeInMinutes").val() ? $("#timeRangeInMinutes").val() : 120;
+
+                $.get(deltaApi + "?lastId=" + lastId + "&timeRangeInMinutes=" + timeRangeInMinutes, function(delta) {
+                    console.log("delta length : " + delta.length + "\n" + JSON.stringify(delta));
+
+                    if (delta && delta.length > 0) {
+                        var totalDataLength = data.length + delta.length;
+
+                        if (totalDataLength > maxDataLength) {
+                            for (i=0; i<(totalDataLength - maxDataLength); i++) {
+                                data.shift();
+                            }
+                        }
+
+                        for (i=0; i<delta.length; i++) {
+                            data.push([new Date(delta[i].createdDate), delta[i].sum]);
+                        }
+                        g2.updateOptions( { 'file': data } );
+
+                        var lastData = delta.pop();
+
+                        $("#lastId").val(lastData.id);
+                        $("#sum").text(lastData.sum);
+
+                        hideAlert();
+                    } else {
+                        showAlert("warning", "No update from the monitor server.");
+                    }
+                }).fail(function() {
+                    showAlert("danger", "Can't connect to the monitor server.");
+                });
+            }
+
+            $("#updated").text("Last Updated : " + new Date());
         }
     </script>
 </body>
