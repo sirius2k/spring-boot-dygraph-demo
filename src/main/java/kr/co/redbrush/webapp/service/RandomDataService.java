@@ -24,6 +24,9 @@ public class RandomDataService {
     @Value("${api.create.random.url}")
     private String createRandomUrl;
 
+    @Value("${enableCollect:true}")
+    private boolean enableCollect;
+
     @Autowired
     private RestTemplate restTemplate;
 
@@ -32,18 +35,21 @@ public class RandomDataService {
 
     private String requestUrl;
 
-    private boolean collectEnabled = true;
+    private boolean collecting;
+    private boolean requestCompleted = true;
 
     @PostConstruct
     private void init() {
         requestUrl = serverHost + createRandomUrl;
 
-        LOGGER.info("serverHost : {}, createRandomUrl : {}, requestUrl : {}", serverHost, createRandomUrl, requestUrl);
+        collecting = true;
+
+        LOGGER.info("serverHost : {}, createRandomUrl : {}, requestUrl : {}, collecting", serverHost, createRandomUrl, requestUrl, collecting);
     }
 
     @Scheduled(fixedRate = 1000)
     public void collect() {
-        if (collectEnabled) {
+        if (collecting && requestCompleted) {
             RandomData lastData = repository.findFirst1ByOrderByCreatedDateDesc();
             RandomValue randomValue = restTemplate.getForObject(requestUrl, RandomValue.class);
 
@@ -78,5 +84,25 @@ public class RandomDataService {
         randomValue.setValue(nextRandom);
 
         return randomValue;
+    }
+
+    public void deleteAll() {
+        repository.deleteAll();
+    }
+
+    public List<RandomData> getDelta(long lastId, Date fromDate) {
+        return repository.findAllByIdGreaterThanAndCreatedDateGreaterThanOrderByIdAsc(lastId, fromDate);
+    }
+
+    public void enableCollect() {
+        this.collecting = true;
+    }
+
+    public void disableCollect() {
+        this.collecting = false;
+    }
+
+    public boolean isCollecting() {
+        return collecting;
     }
 }

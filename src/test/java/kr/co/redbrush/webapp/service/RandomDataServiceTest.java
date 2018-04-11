@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
@@ -24,9 +23,6 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.hamcrest.number.OrderingComparison.lessThanOrEqualTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +49,7 @@ public class RandomDataServiceTest {
     public void before() {
         ReflectionTestUtils.setField(randomDataService, "serverHost", serverUrl);
         ReflectionTestUtils.setField(randomDataService, "createRandomUrl", createRandomUrl);
-        ReflectionTestUtils.setField(randomDataService, "collectEnabled", true);
+        ReflectionTestUtils.setField(randomDataService, "collecting", true);
         ReflectionTestUtils.invokeMethod(randomDataService, "init");
     }
 
@@ -129,5 +125,30 @@ public class RandomDataServiceTest {
         assertThat("Random value should not be null.", randomValue, notNullValue());
         assertThat("Unexpected randomValue", randomValue.getValue(), greaterThanOrEqualTo(-10));
         assertThat("Unexpected randomValue", randomValue.getValue(), lessThanOrEqualTo(10));
+    }
+
+    @Test
+    public void testDeleteAll() {
+        randomDataService.deleteAll();
+
+        verify(repository).deleteAll();
+    }
+
+    @Test
+    public void testEnableDisableCollect() {
+        randomDataService.enableCollect();
+        assertThat("Not exepected collecting status.", randomDataService.isCollecting(), is(true));
+
+        randomDataService.disableCollect();
+        assertThat("Not exepected collecting status.", randomDataService.isCollecting(), is(false));
+    }
+
+    @Test
+    public void testGetDelta() {
+        long lastId = 1L;
+        Date collectedDate = new Date();
+        randomDataService.getDelta(lastId, collectedDate);
+
+        verify(repository).findAllByIdGreaterThanAndCreatedDateGreaterThanOrderByIdAsc(lastId, collectedDate);
     }
 }
